@@ -177,7 +177,7 @@ export default function Home() {
               <Heart className="w-6 h-6 text-rose-500" />
               <span className="text-xl font-bold text-white">PetTrust</span>
             </div>
-            <p>© 2024 PetTrust. 用科技守护每一份信任</p>
+            <p>© 2026 PetTrust. 用科技守护每一份信任</p>
           </div>
         </footer>
       </div>
