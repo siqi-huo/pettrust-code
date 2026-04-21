@@ -2,11 +2,12 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import type { Message } from '@/types';
 
-export default function MessagesPage() {
+// 将使用 useSearchParams 的逻辑抽离到独立组件
+function MessagesContent() {
     const searchParams = useSearchParams();
     const shelterId = searchParams.get('shelter');
     const [messages, setMessages] = useState<Message[]>([]);
@@ -14,7 +15,6 @@ export default function MessagesPage() {
     const [userId, setUserId] = useState('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
-    // 使用 useCallback 确保函数引用稳定，并提前声明
     const fetchMessages = useCallback(async () => {
         let url = '/api/messages';
         if (shelterId) url += `?shelter_id=${shelterId}`;
@@ -83,8 +83,8 @@ export default function MessagesPage() {
                                     >
                                         <p>{msg.content}</p>
                                         <span className="text-xs opacity-70 block mt-1">
-                      {new Date(msg.created_at).toLocaleTimeString()}
-                    </span>
+                                            {new Date(msg.created_at).toLocaleTimeString()}
+                                        </span>
                                     </div>
                                 </div>
                             ))
@@ -110,5 +110,14 @@ export default function MessagesPage() {
                 </>
             )}
         </div>
+    );
+}
+
+// 默认导出组件，用 Suspense 包裹
+export default function MessagesPage() {
+    return (
+        <Suspense fallback={<div className="p-8 text-center">加载中...</div>}>
+            <MessagesContent />
+        </Suspense>
     );
 }
