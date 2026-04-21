@@ -2,12 +2,25 @@
 import { Resend } from 'resend';
 import VerificationEmail from '@/emails/verification-email';
 
-const resend = new Resend(process.env.RESEND_APT_KEY);
+// 延迟初始化 Resend 客户端
+let resendClient: Resend | null = null;
+
+function getResendClient(): Resend {
+    if (!resendClient) {
+        const apiKey = process.env.RESEND_API_KEY;
+        if (!apiKey) {
+            throw new Error('RESEND_API_KEY is not configured');
+        }
+        resendClient = new Resend(apiKey);
+    }
+    return resendClient;
+}
 
 export async function sendVerificationEmail(email: string, code: string): Promise<boolean> {
     try {
+        const resend = getResendClient(); // 使用 getter 获取客户端
         const { data, error } = await resend.emails.send({
-            from: 'PetTrust <onboarding@resend.dev>',
+            from: 'PetTrust <onboarding@resend.dev>', // 如果已验证域名可替换为你的域名邮箱
             to: email,
             subject: '【PetTrust】邮箱验证码',
             react: VerificationEmail({ code }),
