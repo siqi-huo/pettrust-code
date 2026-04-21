@@ -4,9 +4,15 @@ export const dynamic = 'force-dynamic';
 
 import { useEffect, useState, useRef, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import type { Message } from '@/types';
 
-// 将使用 useSearchParams 的逻辑抽离到独立组件
+interface Message {
+  id: string;
+  sender_id: string;
+  receiver_id: string;
+  content: string;
+  created_at: string;
+}
+
 function MessagesContent() {
     const searchParams = useSearchParams();
     const shelterId = searchParams.get('shelter');
@@ -16,42 +22,58 @@ function MessagesContent() {
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const fetchMessages = useCallback(async () => {
+        if (!shelterId) return;
         let url = '/api/messages';
         if (shelterId) url += `?shelter_id=${shelterId}`;
-        const res = await fetch(url);
-        const data = await res.json();
-        if (data.success) {
-            setMessages(data.messages);
-            setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+        try {
+            const res = await fetch(url);
+            const data = await res.json();
+            if (data.success && data.messages) {
+                setMessages(data.messages);
+                setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+            }
+        } catch (error) {
+            console.error('获取消息失败:', error);
         }
     }, [shelterId]);
 
     useEffect(() => {
+        if (!shelterId) return;
+        
         fetch('/api/auth/me')
             .then(res => res.json())
-            .then(data => setUserId(data.user.id));
+            .then(data => {
+                if (data.user) {
+                    setUserId(data.user.id);
+                }
+            })
+            .catch(console.error);
 
         fetchMessages();
         const interval = setInterval(fetchMessages, 5000);
         return () => clearInterval(interval);
-    }, [fetchMessages]);
+    }, [shelterId, fetchMessages]);
 
     const sendMessage = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (!newMsg.trim() || !shelterId) return;
 
-        const res = await fetch('/api/messages', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                receiver_id: shelterId,
-                content: newMsg,
-            }),
-        });
-        const data = await res.json();
-        if (data.success) {
-            setNewMsg('');
-            await fetchMessages();
+        try {
+            const res = await fetch('/api/messages', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    receiver_id: shelterId,
+                    content: newMsg,
+                }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                setNewMsg('');
+                fetchMessages();
+            }
+        } catch (error) {
+            console.error('发送消息失败:', error);
         }
     };
 
@@ -61,7 +83,7 @@ function MessagesContent() {
 
             {!shelterId ? (
                 <div className="bg-white p-8 rounded-xl shadow text-center text-gray-500">
-                    请从宠物详情页点击“联系机构”开始对话。
+                    请从宠物详情页点击"联系机构"开始对话。
                 </div>
             ) : (
                 <>
@@ -113,7 +135,6 @@ function MessagesContent() {
     );
 }
 
-// 默认导出组件，用 Suspense 包裹
 export default function MessagesPage() {
     return (
         <Suspense fallback={<div className="p-8 text-center">加载中...</div>}>
