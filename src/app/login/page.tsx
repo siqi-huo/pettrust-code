@@ -31,7 +31,12 @@ function LoginForm() {
     setLoading(false);
 
     if (data.success) {
-      router.push('/');
+      // 根据角色跳转到对应仪表盘
+      if (data.user.role === 'shelter') {
+        router.push('/dashboard/shelter');
+      } else {
+        router.push('/dashboard/adopter');
+      }
     } else {
       setError(data.error || '登录失败');
     }
