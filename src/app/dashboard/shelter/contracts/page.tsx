@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { FileText, Clock, CheckCircle, XCircle, Eye } from 'lucide-react';
 
@@ -35,7 +35,7 @@ export default function ShelterContractsPage() {
   };
 
   const getStatusBadge = (status: string) => {
-    const config: Record<string, { label: string; icon: JSX.Element; className: string }> = {
+    const config: Record<string, { label: string; icon: React.ReactNode; className: string }> = {
       pending: { label: '待审核', icon: <Clock className="w-3.5 h-3.5" />, className: 'bg-yellow-100 text-yellow-700' },
       active: { label: '已通过', icon: <CheckCircle className="w-3.5 h-3.5" />, className: 'bg-green-100 text-green-700' },
       completed: { label: '已完成', icon: <CheckCircle className="w-3.5 h-3.5" />, className: 'bg-blue-100 text-blue-700' },
