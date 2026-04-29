@@ -20,7 +20,7 @@ export async function sendVerificationEmail(email: string, code: string): Promis
     try {
         const resend = getResendClient(); // 使用 getter 获取客户端
         const { data, error } = await resend.emails.send({
-            from: 'PetTrust <onboarding@resend.dev>', // 如果已验证域名可替换为你的域名邮箱
+            from: 'PetTrust <noreply@pettrust.asia>',// 如果已验证域名可替换为你的域名邮箱
             to: email,
             subject: '【PetTrust】邮箱验证码',
             react: VerificationEmail({ code }),
