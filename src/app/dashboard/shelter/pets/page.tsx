@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Plus, PawPrint, Edit, Trash2, Search } from 'lucide-react';
+import { Plus, PawPrint, Edit, Trash2 } from 'lucide-react';
 
 interface Pet {
   id: string;
@@ -12,6 +12,7 @@ interface Pet {
   age: number;
   gender: string;
   status: string;
+  shelter_id: string;
   created_at: string;
 }
 
@@ -33,7 +34,8 @@ export default function ShelterPetsPage() {
       const data = await res.json();
       if (data.success) {
         // 筛选属于当前机构的宠物
-        setPets(data.pets?.filter((p: Pet) => p.shelter_id === sessionData.user.id) || []);
+        const filtered = data.pets?.filter((p: Pet) => p.shelter_id === sessionData.user.id) || [];
+        setPets(filtered);
       }
     } catch (error) {
       console.error('获取宠物列表失败:', error);
