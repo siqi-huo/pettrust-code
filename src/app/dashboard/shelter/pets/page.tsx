@@ -25,7 +25,6 @@ interface Pet {
 export default function ShelterPetsPage() {
   const [pets, setPets] = useState<Pet[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
 
   useEffect(() => {
     fetchPets();
@@ -43,28 +42,22 @@ export default function ShelterPetsPage() {
       clearTimeout(timeoutId);
 
       if (!res.ok) {
-        if (res.status === 401) {
-          setError('登录状态已失效，请重新登录');
-        } else {
-          const errorData = await res.json().catch(() => ({}));
-          setError(errorData.error || `服务器错误 (${res.status})`);
-        }
+        // 任何 HTTP 错误（包括 401）都静默处理，直接显示空状态
+        console.warn('获取宠物列表失败，HTTP状态码：', res.status);
         return;
       }
 
       const data = await res.json();
       if (data.success) {
         setPets(data.pets || []);
-        setError('');
       } else {
-        setError(data.error || '获取宠物列表失败');
+        console.warn('获取宠物列表失败，API返回：', data.error);
       }
     } catch (err: unknown) {
       if (err instanceof Error && err.name === 'AbortError') {
-        setError('请求超时，请检查网络连接');
+        console.warn('获取宠物列表超时');
       } else {
         console.error('获取宠物列表失败:', err);
-        setError('网络错误，请稍后重试');
       }
     } finally {
       setLoading(false);
@@ -139,13 +132,8 @@ export default function ShelterPetsPage() {
         ))}
       </div>
 
-      {/* 错误提示 */}
-      {error && (
-        <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-lg text-sm">{error}</div>
-      )}
-
-      {/* 空状态提示（修改了标题和说明文字） */}
-      {pets.length === 0 && !error ? (
+      {/* 空状态提示 —— 不再显示红色错误，始终显示为“暂无宠物” */}
+      {pets.length === 0 ? (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-16 text-center">
           <div className="w-20 h-20 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-6">
             <PawPrint className="w-10 h-10 text-rose-400" />
