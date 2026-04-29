@@ -33,22 +33,13 @@ export default function ShelterPetsPage() {
 
   const fetchPets = async () => {
     try {
-      const sessionRes = await fetch('/api/auth/me');
-      const sessionData = await sessionRes.json();
-      if (!sessionData.user) {
-        setError('请先登录');
-        setLoading(false);
-        return;
-      }
-
       const res = await fetch('/api/pets');
       const data = await res.json();
       if (data.success) {
-        // 筛选属于当前机构的宠物
-        const filtered = (data.pets || []).filter(
-          (p: Pet) => p.shelter_id === sessionData.user.id
-        );
-        setPets(filtered);
+        setPets(data.pets || []);
+        setError('');
+      } else if (res.status === 401) {
+        setError('登录状态已失效，请重新登录');
       } else {
         setError(data.error || '获取宠物列表失败');
       }
@@ -154,10 +145,7 @@ export default function ShelterPetsPage() {
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {pets.map((pet) => (
-            <div
-              key={pet.id}
-              className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow group"
-            >
+            <div key={pet.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow group">
               {/* 宠物照片 */}
               <div className="h-48 bg-gradient-to-br from-rose-100 to-orange-100 relative overflow-hidden">
                 {pet.photos && pet.photos[0] ? (
