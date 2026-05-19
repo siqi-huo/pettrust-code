@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseClient } from '@/storage/database/supabase-client';
-import { sessions } from '@/lib/sessions';
+import { getSession } from '@/lib/sessions';
 
 // 获取当前用户的所有会话列表（按机构分组）
 export async function GET(request: NextRequest) {
@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
     if (!sessionToken) {
         return NextResponse.json({ error: '未登录' }, { status: 401 });
     }
-    const session = sessions.get(sessionToken);
+    const session = getSession(sessionToken);
     if (!session) {
         return NextResponse.json({ error: '会话过期' }, { status: 401 });
     }
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     if (!sessionToken) {
         return NextResponse.json({ error: '未登录' }, { status: 401 });
     }
-    const session = sessions.get(sessionToken);
+    const session = getSession(sessionToken);
     if (!session) {
         return NextResponse.json({ error: '会话过期' }, { status: 401 });
     }
