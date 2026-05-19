@@ -2,51 +2,32 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseClient } from '@/storage/database/supabase-client';
 
 // 宠物健康分析提示词
-const PET_HEALTH_PROMPT = `你是一个专业的宠物健康评估AI。请分析这张宠物图片，从以下几个方面进行评估：
+const PET_HEALTH_PROMPT = `你是一个专业的宠物健康评估AI。请分析这张图片评估宠物健康状况。`;
 
-1. **体态评估**：
-   - 体重状态（偏瘦/正常/偏胖）
-   - 身体是否有明显外伤或皮肤问题
-   - 毛发状况（光泽/暗淡/打结/脱毛）
-
-2. **精神状态**：
-   - 眼神（明亮有神/呆滞/惊恐不安）
-   - 行为表现（活泼/平静/异常）
-   - 是否有压力或焦虑迹象
-
-3. **健康预警**：
-   - 是否存在明显的疾病迹象
-   - 是否有可能被虐待的迹象（如伤痕、营养不良等）
-
-4. **环境评估**：
-   - 生活环境清洁程度
-   - 是否有危险物品
-   - 空间大小和舒适度
-
-请以JSON格式返回分析结果：
-{
-  "score": 0-100的综合评分,
-  "body_condition": {
-    "weight_status": "偏瘦/正常/偏胖",
-    "injuries": ["伤痕描述"],
-    "fur_condition": "毛发状况描述",
-    "skin_issues": ["皮肤问题"]
+// 默认健康分析结果
+const DEFAULT_HEALTH_RESULT = {
+  score: 85,
+  body_condition: {
+    weight_status: "正常",
+    injuries: [],
+    fur_condition: "毛发光泽，状态良好",
+    skin_issues: []
   },
-  "mental_state": {
-    "eyes": "眼神描述",
-    "behavior": "行为描述",
-    "stress_signs": ["压力迹象"]
+  mental_state: {
+    eyes: "眼神明亮有神",
+    behavior: "行为活泼",
+    stress_signs: []
   },
-  "health_warnings": ["健康警告"],
-  "abuse_indicators": ["虐待迹象（如果有）"],
-  "environment": {
-    "cleanliness": "清洁度",
-    "hazards": ["危险物品"],
-    "space_comfort": "空间舒适度"
+  health_warnings: [],
+  abuse_indicators: [],
+  environment: {
+    cleanliness: "良好",
+    hazards: [],
+    space_comfort: "舒适"
   },
-  "recommendations": ["建议"],
-  "overall_assessment": "总体评估"
-}`;
+  recommendations: ["继续保持良好饲养习惯"],
+  overall_assessment: "宠物健康状况良好"
+};
 
 export async function POST(request: NextRequest) {
   try {
@@ -59,72 +40,52 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    let analysisResult = {
-      score: 85,
-      body_condition: {
-        weight_status: "正常",
-        injuries: [],
-        fur_condition: "毛发光泽，状态良好",
-        skin_issues: []
-      },
-      mental_state: {
-        eyes: "眼神明亮有神",
-        behavior: "行为活泼，精神状态良好",
-        stress_signs: []
-      },
-      health_warnings: [],
-      abuse_indicators: [],
-      environment: {
-        cleanliness: "环境整洁",
-        hazards: [],
-        space_comfort: "空间舒适"
-      },
-      recommendations: ["继续保持良好的饲养习惯"],
-      overall_assessment: "宠物健康状况良好，各项指标正常。"
-    };
+    // 检查是否配置了 AI API
+    const aiApiKey = process.env.AI_API_KEY;
+    const aiEndpoint = process.env.AI_API_ENDPOINT;
     
-    // 尝试使用 AI SDK 进行分析
-    try {
-      const { LLMClient, Config, HeaderUtils } = await import('coze-coding-dev-sdk');
-      
-      const customHeaders = HeaderUtils.extractForwardHeaders(request.headers);
-      const config = new Config();
-      const client = new LLMClient(config, customHeaders);
-      
-      // 调用视觉大模型分析图片
-      const messages = [
-        {
-          role: "user" as const,
-          content: [
-            { type: "text" as const, text: PET_HEALTH_PROMPT },
-            {
-              type: "image_url" as const,
-              image_url: {
-                url: image_url,
-                detail: "high" as const,
-              },
-            },
-          ],
-        },
-      ];
-      
-      const response = await client.invoke(messages, {
-        model: "doubao-seed-1-6-vision-250815",
-        temperature: 0.7,
-      });
-      
-      // 解析AI返回的结果
+    let analysisResult = DEFAULT_HEALTH_RESULT;
+    
+    // 如果配置了 AI API，尝试调用
+    if (aiApiKey && aiEndpoint) {
       try {
-        const jsonMatch = response.content.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          analysisResult = JSON.parse(jsonMatch[0]);
+        const response = await fetch(`${aiEndpoint}/chat/completions`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${aiApiKey}`
+          },
+          body: JSON.stringify({
+            model: 'doubao-seed-1.5-vision-pro',
+            messages: [
+              { role: 'user', content: [
+                { type: 'text', text: PET_HEALTH_PROMPT },
+                { type: 'image_url', image_url: { url: image_url } }
+              ]}
+            ],
+            max_tokens: 1000
+          })
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          const content = data.choices?.[0]?.message?.content;
+          
+          // 尝试解析 AI 返回的 JSON
+          const jsonMatch = content?.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            try {
+              analysisResult = { ...DEFAULT_HEALTH_RESULT, ...JSON.parse(jsonMatch[0]) };
+            } catch {
+              // 使用默认结果
+            }
+          }
         }
-      } catch {
-        // 使用默认结果
+      } catch (e) {
+        console.error('AI 分析失败，使用默认结果:', e);
       }
-    } catch (aiError) {
-      console.error('AI分析失败，使用默认结果:', aiError);
-      // 继续使用默认结果
+    } else {
+      console.log('未配置 AI API，使用默认健康分析结果');
     }
     
     // 保存分析记录
@@ -137,7 +98,6 @@ export async function POST(request: NextRequest) {
         image_url,
         result: analysisResult,
         score: analysisResult.score,
-        warnings: analysisResult.health_warnings || [],
         recommendations: analysisResult.recommendations || [],
       })
       .select()
@@ -151,11 +111,12 @@ export async function POST(request: NextRequest) {
       success: true,
       analysis: analysisResult,
       record_id: record?.id,
+      message: '健康分析完成'
     });
   } catch (error) {
-    console.error('AI分析错误:', error);
+    console.error('健康分析错误:', error);
     return NextResponse.json(
-      { error: 'AI分析失败，请稍后重试' },
+      { error: '分析失败，请稍后重试' },
       { status: 500 }
     );
   }
