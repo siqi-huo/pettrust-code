@@ -1,12 +1,23 @@
 [project]
+entrypoint = "dist/server.js"
 requires = ["nodejs-24"]
+project_type = "web"
+
+[preview]
+preview_enable = "enabled"
 
 [dev]
 build = ["bash", "./scripts/prepare.sh"]
 run = ["bash", "./scripts/dev.sh"]
-deps = ["git"] # -> apt install git
+deps = ["git"]
 
 [deploy]
 build = ["bash","./scripts/build.sh"]
 run = ["bash","./scripts/start.sh"]
-deps = ["git"] # -> apt install git
+
+[deploy.profile]
+kind = "service"
+flavor = "web"
+
+[deploy.backend]
+enabled = true

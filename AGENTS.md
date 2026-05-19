@@ -115,3 +115,24 @@ pnpm ts-check
 ```bash
 pnpm exec drizzle-kit push --force --config=./src/storage/database/drizzle.config.ts
 ```
+
+## 登录与注册
+### 开发模式
+- 开发环境下（NODE_ENV !== 'production'），注册时可以使用固定验证码 `123456`
+- 登录密码使用 base64 编码存储
+
+### 会话管理
+- 使用自定义会话系统（Map 存储在内存中）
+- 会话存储模块位于 `/workspace/projects/src/lib/sessions.ts`
+- 登录后设置 `session_token` 和 `user_role` Cookie
+
+### 数据库表
+- `users` - 用户表（支持 adopter 和 shelter 两种角色）
+- `verification_codes` - 验证码表
+
+## 预览链路
+- 技术项目根目录：`/workspace/projects`
+- 预览端口：5000
+- 预览命令：`bash ./scripts/dev.sh`
+- 构建命令：`bash ./scripts/prepare.sh`
+

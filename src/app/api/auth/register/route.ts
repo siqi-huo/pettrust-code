@@ -40,26 +40,34 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '该邮箱已被注册' }, { status: 400 });
     }
 
-    // 2. 验证验证码
-    const now = new Date();
-    const { data: validCode, error: codeError } = await client
-        .from('verification_codes')
-        .select('*')
-        .eq('email', validatedData.email)
-        .eq('code', validatedData.code)
-        .eq('used', false)
-        .gte('expires_at', now.toISOString())
-        .maybeSingle();
+    // 2. 验证验证码（开发模式下使用固定验证码 123456）
+    const isDev = process.env.NODE_ENV !== 'production';
+    
+    if (isDev && validatedData.code === '123456') {
+      // 开发模式：允许使用固定验证码
+      console.log('开发模式：使用固定验证码 123456');
+    } else {
+      // 正常验证逻辑
+      const now = new Date();
+      const { data: validCode, error: codeError } = await client
+          .from('verification_codes')
+          .select('*')
+          .eq('email', validatedData.email)
+          .eq('code', validatedData.code)
+          .eq('used', false)
+          .gte('expires_at', now.toISOString())
+          .maybeSingle();
 
-    if (codeError || !validCode) {
-      return NextResponse.json({ error: '验证码错误或已过期' }, { status: 400 });
+      if (codeError || !validCode) {
+        return NextResponse.json({ error: '验证码错误或已过期' }, { status: 400 });
+      }
+
+      // 标记验证码为已使用
+      await client
+          .from('verification_codes')
+          .update({ used: true })
+          .eq('id', validCode.id);
     }
-
-    // 3. 标记验证码为已使用
-    await client
-        .from('verification_codes')
-        .update({ used: true })
-        .eq('id', validCode.id);
 
     // 4. 创建用户
     const { data: newUser, error: createError } = await client

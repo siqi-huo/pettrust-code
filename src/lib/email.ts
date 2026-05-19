@@ -2,10 +2,22 @@
 import { Resend } from 'resend';
 import VerificationEmail from '@/emails/verification-email';
 
-const resend = new Resend(process.env.RESEND_APT_KEY);
+function getResendClient(): Resend | null {
+    const apiKey = process.env.RESEND_API_KEY || process.env.RESEND_APT_KEY;
+    if (!apiKey) {
+        console.warn('RESEND_API_KEY not set, email sending disabled');
+        return null;
+    }
+    return new Resend(apiKey);
+}
 
 export async function sendVerificationEmail(email: string, code: string): Promise<boolean> {
     try {
+        const resend = getResendClient();
+        if (!resend) {
+            return false;
+        }
+        
         const { data, error } = await resend.emails.send({
             from: 'PetTrust <onboarding@resend.dev>',
             to: email,

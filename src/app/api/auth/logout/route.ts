@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { sessions } from '../login/route';
+import { deleteSession } from '@/lib/sessions';
 
 export async function POST(request: NextRequest) {
   const sessionToken = request.cookies.get('session_token')?.value;
 
   if (sessionToken) {
-    sessions.delete(sessionToken);
+    deleteSession(sessionToken);
   }
 
   const response = NextResponse.json({ success: true, message: '已退出登录' });

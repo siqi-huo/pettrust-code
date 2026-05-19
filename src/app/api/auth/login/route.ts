@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseClient } from '@/storage/database/supabase-client';
-
-// 简单会话存储（生产环境应使用Redis或数据库）
-const sessions = new Map<string, { userId: string; email: string; name: string; role: string }>();
+import { setSession } from '@/lib/sessions';
 
 export async function POST(request: NextRequest) {
   try {
@@ -49,7 +47,7 @@ export async function POST(request: NextRequest) {
 
     // 生成会话token
     const sessionToken = Buffer.from(`${user.id}-${Date.now()}`).toString('base64');
-    sessions.set(sessionToken, {
+    setSession(sessionToken, {
       userId: user.id,
       email: user.email,
       name: user.name,
@@ -95,6 +93,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
-// 导出sessions供其他路由使用
-export { sessions };

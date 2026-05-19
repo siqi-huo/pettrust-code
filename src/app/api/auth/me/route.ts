@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSupabaseClient } from '@/storage/database/supabase-client';
+import { getSession } from '@/lib/sessions';
 
 export async function GET(request: NextRequest) {
   try {
@@ -12,9 +12,7 @@ export async function GET(request: NextRequest) {
       );
     }
     
-    // 从会话存储获取用户信息（简化版）
-    const { sessions } = await import('../login/route');
-    const session = sessions.get(sessionToken);
+    const session = getSession(sessionToken);
     
     if (!session) {
       return NextResponse.json(

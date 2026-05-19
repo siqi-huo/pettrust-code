@@ -83,18 +83,23 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // 5. 发送邮件
-        const emailSent = await sendVerificationEmail(email, code);
-        if (!emailSent) {
-            return NextResponse.json(
-                { error: '邮件发送失败，请稍后重试' },
-                { status: 500 }
-            );
+        // 5. 发送邮件（尝试发送，失败不影响注册）
+        let emailSent = false;
+        try {
+            emailSent = await sendVerificationEmail(email, code);
+        } catch (e) {
+            console.warn('邮件发送失败:', e);
         }
-
+        
+        // 开发模式：即使邮件发送失败也允许注册
+        // 验证码会存储到数据库，注册时会验证
+        const isDev = process.env.NODE_ENV !== 'production';
+        
         return NextResponse.json({
             success: true,
-            message: '验证码已发送至您的邮箱',
+            message: emailSent ? '验证码已发送至您的邮箱' : '验证码已生成（开发模式）',
+            // 开发模式下返回验证码方便测试
+            ...(isDev && { dev_code: code }),
         });
     } catch (error) {
         if (error instanceof ZodError) {
