@@ -1,7 +1,8 @@
 {
   "framework": "nextjs",
-  "buildCommand": "pnpm install --no-frozen-lockfile && pnpm next build --webpack",
-  "installCommand": "pnpm install --legacy-peer-deps",
-  "devCommand": "pnpm next dev",
-  "outputDirectory": ".next"
+  "installCommand": "pnpm install",
+  "buildCommand": "pnpm run build",
+  "devCommand": "pnpm dev",
+  "outputDirectory": ".next",
+  "packageManager": "pnpm@10.6.5"
 }
