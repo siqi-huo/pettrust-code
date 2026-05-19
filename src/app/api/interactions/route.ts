@@ -53,8 +53,8 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    const { sessions } = await import('@/app/api/auth/login/route');
-    const session = sessions.get(sessionToken);
+    const { getSession } = await import('@/lib/sessions');
+    const session = getSession(sessionToken);
     
     if (!session || session.role !== 'shelter') {
       return NextResponse.json(

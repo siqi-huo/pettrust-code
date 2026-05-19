@@ -12,8 +12,8 @@ export async function GET(request: NextRequest) {
       );
     }
     
-    const { sessions } = await import('@/app/api/auth/login/route');
-    const session = sessions.get(sessionToken);
+    const { getSession } = await import('@/lib/sessions');
+    const session = getSession(sessionToken);
     
     if (!session) {
       return NextResponse.json(

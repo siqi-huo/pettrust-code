@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import type { Message } from '@/types';
 
-export default function MessagesPage() {
+function MessagesContent() {
     const searchParams = useSearchParams();
     const shelterId = searchParams.get('shelter');
     const [messages, setMessages] = useState<Message[]>([]);
@@ -12,7 +12,6 @@ export default function MessagesPage() {
     const [userId, setUserId] = useState('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
-    // 使用 useCallback 确保函数引用稳定，并提前声明
     const fetchMessages = useCallback(async () => {
         let url = '/api/messages';
         if (shelterId) url += `?shelter_id=${shelterId}`;
@@ -27,7 +26,7 @@ export default function MessagesPage() {
     useEffect(() => {
         fetch('/api/auth/me')
             .then(res => res.json())
-            .then(data => setUserId(data.user.id));
+            .then(data => setUserId(data.user?.id || ''));
 
         fetchMessages();
         const interval = setInterval(fetchMessages, 5000);
@@ -59,7 +58,7 @@ export default function MessagesPage() {
 
             {!shelterId ? (
                 <div className="bg-white p-8 rounded-xl shadow text-center text-gray-500">
-                    请从宠物详情页点击“联系机构”开始对话。
+                    请从宠物详情页点击"联系机构"开始对话。
                 </div>
             ) : (
                 <>
@@ -81,8 +80,8 @@ export default function MessagesPage() {
                                     >
                                         <p>{msg.content}</p>
                                         <span className="text-xs opacity-70 block mt-1">
-                      {new Date(msg.created_at).toLocaleTimeString()}
-                    </span>
+                                            {new Date(msg.created_at).toLocaleTimeString()}
+                                        </span>
                                     </div>
                                 </div>
                             ))
@@ -108,5 +107,24 @@ export default function MessagesPage() {
                 </>
             )}
         </div>
+    );
+}
+
+function LoadingFallback() {
+    return (
+        <div className="max-w-4xl mx-auto p-8">
+            <div className="animate-pulse">
+                <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
+                <div className="h-64 bg-gray-200 rounded"></div>
+            </div>
+        </div>
+    );
+}
+
+export default function MessagesPage() {
+    return (
+        <Suspense fallback={<LoadingFallback />}>
+            <MessagesContent />
+        </Suspense>
     );
 }

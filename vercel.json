@@ -1,8 +1,9 @@
 {
   "framework": "nextjs",
-  "buildCommand": "pnpm install --no-frozen-lockfile && pnpm run build",
+  "buildCommand": "pnpm install --no-frozen-lockfile && pnpm next build --webpack",
   "installCommand": "pnpm install",
-  "devCommand": "pnpm run dev",
+  "devCommand": "pnpm next dev",
   "regions": ["iad1"],
-  "outputDirectory": ".next"
+  "outputDirectory": ".next",
+  "turbopack": {}
 }
