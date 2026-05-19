@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseClient } from '@/storage/database/supabase-client';
-import { sessions } from '../auth/login/route';
+import { sessions } from '@/lib/sessions';
 
 // 获取当前用户的所有会话列表（按机构分组）
 export async function GET(request: NextRequest) {
