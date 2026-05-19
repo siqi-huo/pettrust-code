@@ -1,7 +1,7 @@
 {
   "framework": "nextjs",
   "buildCommand": "pnpm install --no-frozen-lockfile && pnpm next build --webpack",
-  "installCommand": "pnpm install",
+  "installCommand": "pnpm install --force",
   "devCommand": "pnpm next dev",
   "outputDirectory": ".next"
 }
